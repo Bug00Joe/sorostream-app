@@ -59,7 +59,11 @@ export default function GlobalSearch() {
 
     const historyItems = streams.flatMap((s) => {
       const entries = getMockStreamHistory(s.id);
-      return entries.map((e, i) => ({
+      // Do not index synthesised history entries — only real on-chain
+      // events should appear in search results. The isMock flag identifies
+      // entries that were generated client-side without a real txHash.
+      const realEntries = entries.filter((e) => !e.isMock);
+      return realEntries.map((e, i) => ({
         id: `${s.id}-history-${i}`,
         title: `${e.type} — ${e.amount ? Number(e.amount) / 10_000_000 : ""} ${s.token}`,
         subtitle: `${s.sender} → ${s.recipient} · ${new Date(e.timestamp).toLocaleDateString()}`,
