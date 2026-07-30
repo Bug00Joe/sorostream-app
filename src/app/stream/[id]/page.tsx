@@ -285,7 +285,14 @@ export default function StreamDetail({ params }: { params: { id: string } }) {
           return;
         }
         setStream(data);
-        setHistoryEntries(getMockStreamHistory(params.id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+        // Populate history with mock data only as a fallback while the
+        // contract doesn't emit indexable events. The isMock flag lets
+        // downstream components suppress display and export.
+        setHistoryEntries(
+          getMockStreamHistory(params.id).sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+          ),
+        );
       } catch (err) {
         console.error("Failed to load stream", err);
         if (!cancelled) {
@@ -1262,19 +1269,43 @@ export default function StreamDetail({ params }: { params: { id: string } }) {
               <h2 id="history-heading" className="text-lg font-semibold mb-3">
                 Transaction History
               </h2>
-              <StreamHistory entries={historyEntries} />
-              {historyEntries.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-gray-400 text-sm font-medium mb-3">
-                    History Export
-                  </p>
-                  <TransactionExportButton
-                    entries={historyEntries}
-                    account={stream.recipient}
-                    onExported={(filename) => addToast(`Exported ${filename}`, "success")}
-                  />
-                </div>
-              )}
+              {(() => {
+                // Only show entries sourced from real on-chain data. Mock
+                // entries (isMock: true) are synthesised client-side and
+                // must never be displayed as authoritative history.
+                const realEntries = historyEntries.filter((e) => !e.isMock);
+                const hasOnlyMockData = historyEntries.length > 0 && realEntries.length === 0;
+
+                if (hasOnlyMockData) {
+                  return (
+                    <div className="bg-gray-800 rounded-xl p-6 text-center border border-gray-700 space-y-2">
+                      <p className="text-gray-300 font-medium text-sm">No transaction history yet</p>
+                      <p className="text-gray-500 text-xs leading-relaxed">
+                        On-chain events are not yet indexed for this stream. Transaction
+                        history will appear here once contract event indexing is available.
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <>
+                    <StreamHistory entries={realEntries} />
+                    {realEntries.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-gray-400 text-sm font-medium mb-3">
+                          History Export
+                        </p>
+                        <TransactionExportButton
+                          entries={realEntries}
+                          account={stream.recipient}
+                          onExported={(filename) => addToast(`Exported ${filename}`, "success")}
+                        />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </section>
           </StreamErrorBoundary>
         </div>

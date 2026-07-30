@@ -3,6 +3,12 @@ export interface StreamHistoryEntry {
   type: "withdrawal" | "top-up" | "creation" | "cancellation";
   amount: string;
   txHash: string;
+  /**
+   * True when this entry was synthesised client-side (not sourced from an
+   * on-chain event or an indexer). Must never appear in exported CSVs or be
+   * treated as authoritative transaction data.
+   */
+  isMock?: boolean;
 }
 
 export function toCSV(entries: StreamHistoryEntry[]): string {
