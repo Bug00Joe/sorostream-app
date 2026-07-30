@@ -302,9 +302,13 @@ function DashboardContent() {
   const handleBulkExport = useCallback(() => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    const allEntries = ids.flatMap((id) => getMockStreamHistory(id));
+    // Strip synthesised entries — only export real on-chain history. Mock
+    // entries carry fabricated txHashes and must never appear in CSV exports.
+    const allEntries = ids
+      .flatMap((id) => getMockStreamHistory(id))
+      .filter((e) => !e.isMock);
     if (allEntries.length === 0) {
-      addToast("No history entries for selected streams.", "info");
+      addToast("No verified transaction history is available for the selected streams yet.", "info");
       return;
     }
     downloadCSV(allEntries, `bulk-${ids.length}-streams`);

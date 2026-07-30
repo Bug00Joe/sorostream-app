@@ -419,14 +419,20 @@ export function getStreamsForWallet(address: string | null): StreamData[] {
   return relevant.length > 0 ? relevant : MOCK_STREAMS;
 }
 
+/**
+ * Returns synthesised (non-on-chain) history entries for development and
+ * demo purposes. Every entry is tagged `isMock: true` so callers can
+ * suppress display or export of fabricated data. Do not present these
+ * entries to users as real transaction records.
+ */
 export function getMockStreamHistory(id: string): StreamHistoryEntry[] {
   const base: StreamHistoryEntry[] = [
-    { timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), type: "creation", amount: "10000000000", txHash: "0xabc123creation" },
+    { timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), type: "creation", amount: "10000000000", txHash: "0xabc123creation", isMock: true },
   ];
   if (id === "1" || id === "2" || id === "3") {
     base.push(
-      { timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), type: "withdrawal", amount: "2500000000", txHash: "0xdef456withdraw" },
-      { timestamp: new Date(Date.now() - 86400000).toISOString(), type: "top-up", amount: "5000000000", txHash: "0xghi789topup" }
+      { timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), type: "withdrawal", amount: "2500000000", txHash: "0xdef456withdraw", isMock: true },
+      { timestamp: new Date(Date.now() - 86400000).toISOString(), type: "top-up", amount: "5000000000", txHash: "0xghi789topup", isMock: true },
     );
   }
   return base;
